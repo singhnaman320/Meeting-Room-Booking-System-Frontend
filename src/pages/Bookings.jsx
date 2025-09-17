@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { Calendar, Clock, MapPin, Users, Edit, Trash2, X, Filter } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, Trash2, Edit, X } from 'lucide-react';
 import { format, isToday, isTomorrow, isPast } from 'date-fns';
 import apiService from '../services/apiService';
+import ConfirmationModal from '../components/ConfirmationModal';
 
 const Bookings = () => {
   const [bookings, setBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [bookingToDelete, setBookingToDelete] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
 
@@ -74,22 +77,34 @@ const Bookings = () => {
     }
   };
 
-  const handleDeleteBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to delete this booking? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteClick = (booking) => {
+    setBookingToDelete(booking);
+    setShowDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!bookingToDelete) return;
 
     try {
-      await apiService.bookings.delete(bookingId);
+      await apiService.bookings.delete(bookingToDelete._id);
       toast.success('Booking deleted successfully');
       fetchBookings();
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to delete booking';
       toast.error(message);
+    } finally {
+      setShowDeleteModal(false);
+      setBookingToDelete(null);
     }
   };
 
+  const handleDeleteCancel = () => {
+    setShowDeleteModal(false);
+    setBookingToDelete(null);
+  };
+
   const getBookingTimeText = (startTime, endTime) => {
+    // Ensure dates are properly parsed as local time
     const start = new Date(startTime);
     const end = new Date(endTime);
     
@@ -118,23 +133,23 @@ const Bookings = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 dark:bg-gray-900 min-h-screen">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">My Bookings</h1>
-        <p className="mt-2 text-gray-600">Manage your meeting room reservations.</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">My Bookings</h1>
+        <p className="mt-2 text-gray-600 dark:text-gray-400">Manage your meeting room reservations.</p>
       </div>
 
       {/* Filter Tabs */}
       <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <nav className="-mb-px flex flex-wrap gap-2 sm:gap-8">
             {[
               { key: 'all', label: 'All Bookings' },
               { key: 'upcoming', label: 'Upcoming' },
@@ -145,10 +160,10 @@ const Bookings = () => {
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-2 sm:px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                   filter === tab.key
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 {tab.label}
@@ -162,60 +177,61 @@ const Bookings = () => {
       <div className="space-y-4">
         {filteredBookings.length > 0 ? (
           filteredBookings.map((booking) => (
-            <div key={booking._id} className="card hover:shadow-md transition-shadow duration-200">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-900">{booking.title}</h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking)}`}>
-                      {getStatusText(booking)}
-                    </span>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      <span className="text-sm">{booking.room?.name} - {booking.room?.location}</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span className="text-sm">{getBookingTimeText(booking.startTime, booking.endTime)}</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Users className="w-4 h-4 mr-2" />
-                      <span className="text-sm">{booking.attendees} attendees</span>
-                    </div>
-                  </div>
-
-                  {booking.description && (
-                    <p className="text-gray-600 text-sm mb-4">{booking.description}</p>
-                  )}
-
-                  {booking.isRecurring && (
-                    <div className="flex items-center text-primary-600 text-sm mb-4">
-                      <Calendar className="w-4 h-4 mr-1" />
-                      <span>Recurring meeting</span>
+            <div key={booking._id} className="booking-card hover:shadow-md transition-shadow duration-200">
+              <div className="booking-header">
+                <h3 className="booking-title">{booking.title}</h3>
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusColor(booking)}`}>
+                    {getStatusText(booking)}
+                  </span>
+                  {/* Actions */}
+                  {booking.status === 'active' && new Date(booking.startTime) > new Date() && (
+                    <div className="flex gap-1">
+                      <button
+                        onClick={() => handleCancelBooking(booking._id)}
+                        className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md transition-colors duration-200 flex items-center whitespace-nowrap"
+                      >
+                        <X className="w-3 h-3 mr-1" />
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(booking)}
+                        className="text-xs px-2 py-1 bg-red-100 dark:bg-red-900/30 hover:bg-red-200 dark:hover:bg-red-900/50 text-red-700 dark:text-red-400 rounded-md transition-colors duration-200 flex items-center whitespace-nowrap"
+                      >
+                        <Trash2 className="w-3 h-3 mr-1" />
+                        Delete
+                      </button>
                     </div>
                   )}
                 </div>
+              </div>
+              
+              <div className="booking-content">
+                <div className="responsive-grid">
+                  <div className="flex items-center text-gray-600 dark:text-gray-400 min-w-0">
+                    <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="responsive-text truncate">{booking.room?.name} - {booking.room?.location}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600 dark:text-gray-400 min-w-0">
+                    <Clock className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="responsive-text">{getBookingTimeText(booking.startTime, booking.endTime)}</span>
+                  </div>
+                  <div className="flex items-center text-gray-600 dark:text-gray-400">
+                    <Users className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="responsive-text">{booking.attendees} attendees</span>
+                  </div>
+                </div>
 
-                {/* Actions */}
-                {booking.status === 'active' && new Date(booking.startTime) > new Date() && (
-                  <div className="flex items-center space-x-2 ml-4">
-                    <button
-                      onClick={() => handleCancelBooking(booking._id)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
-                      title="Cancel booking"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteBooking(booking._id)}
-                      className="p-2 text-gray-600 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                      title="Delete booking"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                <div className="booking-description">
+                  {booking.description && (
+                    <p>{booking.description}</p>
+                  )}
+                </div>
+
+                {booking.isRecurring && (
+                  <div className="flex items-center text-primary-600 dark:text-primary-400 text-sm">
+                    <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span>Recurring meeting</span>
                   </div>
                 )}
               </div>
@@ -223,9 +239,9 @@ const Bookings = () => {
           ))
         ) : (
           <div className="text-center py-12">
-            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No bookings found</h3>
-            <p className="mt-1 text-sm text-gray-500">
+            <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No bookings found</h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {filter === 'all' 
                 ? "You haven't made any bookings yet."
                 : `No ${filter} bookings found.`
@@ -234,15 +250,27 @@ const Bookings = () => {
             <div className="mt-6">
               <a
                 href="/rooms"
-                className="btn-primary"
+                className="btn-primary flex items-center justify-center px-6 py-3 min-w-fit whitespace-nowrap"
               >
-                <Calendar className="w-4 h-4 mr-2" />
+                <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
                 Book a Room
               </a>
             </div>
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteModal}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Booking"
+        message={`Are you sure you want to delete the booking "${bookingToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 };
