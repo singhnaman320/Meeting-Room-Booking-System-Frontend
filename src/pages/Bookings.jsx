@@ -14,6 +14,14 @@ const Bookings = () => {
   const [bookingToDelete, setBookingToDelete] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    description: '',
+    startTime: '',
+    endTime: '',
+    attendees: ''
+  });
+  const [editLoading, setEditLoading] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -80,6 +88,57 @@ const Bookings = () => {
   const handleDeleteClick = (booking) => {
     setBookingToDelete(booking);
     setShowDeleteModal(true);
+  };
+
+  const handleEditClick = (booking) => {
+    setSelectedBooking(booking);
+    setEditForm({
+      title: booking.title,
+      description: booking.description || '',
+      startTime: new Date(booking.startTime).toISOString().slice(0, 16),
+      endTime: new Date(booking.endTime).toISOString().slice(0, 16),
+      attendees: booking.attendees?.toString() || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedBooking) return;
+
+    setEditLoading(true);
+    try {
+      const updateData = {
+        title: editForm.title,
+        description: editForm.description,
+        startTime: new Date(editForm.startTime).toISOString(),
+        endTime: new Date(editForm.endTime).toISOString(),
+        attendees: parseInt(editForm.attendees) || 1
+      };
+
+      await apiService.bookings.update(selectedBooking._id, updateData);
+      toast.success('Booking updated successfully');
+      setShowEditModal(false);
+      setSelectedBooking(null);
+      fetchBookings();
+    } catch (error) {
+      const message = error.response?.data?.message || 'Failed to update booking';
+      toast.error(message);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  const handleEditCancel = () => {
+    setShowEditModal(false);
+    setSelectedBooking(null);
+    setEditForm({
+      title: '',
+      description: '',
+      startTime: '',
+      endTime: '',
+      attendees: ''
+    });
   };
 
   const handleDeleteConfirm = async () => {
@@ -186,7 +245,14 @@ const Bookings = () => {
                   </span>
                   {/* Actions */}
                   {booking.status === 'active' && new Date(booking.startTime) > new Date() && (
-                    <div className="flex gap-1">
+                    <div className="flex flex-wrap gap-1">
+                      <button
+                        onClick={() => handleEditClick(booking)}
+                        className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-700 dark:text-blue-400 rounded-md transition-colors duration-200 flex items-center whitespace-nowrap"
+                      >
+                        <Edit className="w-3 h-3 mr-1" />
+                        Edit
+                      </button>
                       <button
                         onClick={() => handleCancelBooking(booking._id)}
                         className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md transition-colors duration-200 flex items-center whitespace-nowrap"
@@ -271,6 +337,142 @@ const Bookings = () => {
         cancelText="Cancel"
         type="danger"
       />
+
+      {/* Edit Booking Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Edit Booking
+              </h2>
+              <button
+                onClick={handleEditCancel}
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="p-6 space-y-4">
+              {/* Room Info (Read-only) */}
+              <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
+                  {selectedBooking?.room?.name}
+                </h3>
+                <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center">
+                  <MapPin className="w-3 h-3 mr-1" />
+                  {selectedBooking?.room?.location}
+                </p>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Meeting Title *
+                </label>
+                <input
+                  type="text"
+                  value={editForm.title}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                  required
+                  disabled={editLoading}
+                />
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm resize-none"
+                  disabled={editLoading}
+                />
+              </div>
+
+              {/* Date and Time */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Start Time *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editForm.startTime}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, startTime: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                    required
+                    disabled={editLoading}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    End Time *
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={editForm.endTime}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, endTime: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                    required
+                    disabled={editLoading}
+                  />
+                </div>
+              </div>
+
+              {/* Attendees */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Number of Attendees
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max={selectedBooking?.room?.capacity || 50}
+                  value={editForm.attendees}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, attendees: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                  disabled={editLoading}
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Room capacity: {selectedBooking?.room?.capacity} people
+                </p>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={handleEditCancel}
+                  disabled={editLoading}
+                  className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editLoading || !editForm.title || !editForm.startTime || !editForm.endTime}
+                  className="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 flex items-center justify-center"
+                >
+                  {editLoading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Booking'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
