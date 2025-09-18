@@ -12,6 +12,8 @@ const Bookings = () => {
   const [filter, setFilter] = useState('all');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [bookingToDelete, setBookingToDelete] = useState(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
+  const [bookingToCancel, setBookingToCancel] = useState(null);
   const [selectedBooking, setSelectedBooking] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -22,6 +24,17 @@ const Bookings = () => {
     attendees: ''
   });
   const [editLoading, setEditLoading] = useState(false);
+
+  // Convert date to local datetime-local format
+  const formatDateTimeLocal = (dateString) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   useEffect(() => {
     fetchBookings();
@@ -70,19 +83,30 @@ const Bookings = () => {
     setFilteredBookings(filtered.sort((a, b) => new Date(b.startTime) - new Date(a.startTime)));
   };
 
-  const handleCancelBooking = async (bookingId) => {
-    if (!window.confirm('Are you sure you want to cancel this booking?')) {
-      return;
-    }
+  const handleCancelClick = (booking) => {
+    setBookingToCancel(booking);
+    setShowCancelModal(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (!bookingToCancel) return;
 
     try {
-      await apiService.bookings.cancel(bookingId);
+      await apiService.bookings.cancel(bookingToCancel._id);
       toast.success('Booking cancelled successfully');
       fetchBookings();
     } catch (error) {
       const message = error.response?.data?.message || 'Failed to cancel booking';
       toast.error(message);
+    } finally {
+      setShowCancelModal(false);
+      setBookingToCancel(null);
     }
+  };
+
+  const handleCancelCancel = () => {
+    setShowCancelModal(false);
+    setBookingToCancel(null);
   };
 
   const handleDeleteClick = (booking) => {
@@ -95,8 +119,8 @@ const Bookings = () => {
     setEditForm({
       title: booking.title,
       description: booking.description || '',
-      startTime: new Date(booking.startTime).toISOString().slice(0, 16),
-      endTime: new Date(booking.endTime).toISOString().slice(0, 16),
+      startTime: formatDateTimeLocal(booking.startTime),
+      endTime: formatDateTimeLocal(booking.endTime),
       attendees: booking.attendees?.toString() || ''
     });
     setShowEditModal(true);
@@ -254,7 +278,7 @@ const Bookings = () => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleCancelBooking(booking._id)}
+                        onClick={() => handleCancelClick(booking)}
                         className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-md transition-colors duration-200 flex items-center whitespace-nowrap"
                       >
                         <X className="w-3 h-3 mr-1" />
@@ -336,6 +360,18 @@ const Bookings = () => {
         confirmText="Delete"
         cancelText="Cancel"
         type="danger"
+      />
+
+      {/* Cancel Booking Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showCancelModal}
+        onClose={handleCancelCancel}
+        onConfirm={handleCancelConfirm}
+        title="Cancel Booking"
+        message={`Are you sure you want to cancel the booking "${bookingToCancel?.title}"? This action cannot be undone.`}
+        confirmText="Cancel Booking"
+        cancelText="Keep Booking"
+        type="warning"
       />
 
       {/* Edit Booking Modal */}
