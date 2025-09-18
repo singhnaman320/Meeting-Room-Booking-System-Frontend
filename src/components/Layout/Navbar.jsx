@@ -10,6 +10,7 @@ const Navbar = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const mobileMenuRef = useRef(null);
+  const hamburgerButtonRef = useRef(null);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -32,7 +33,12 @@ const Navbar = () => {
   // Close mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+      if (
+        mobileMenuRef.current && 
+        !mobileMenuRef.current.contains(event.target) &&
+        hamburgerButtonRef.current &&
+        !hamburgerButtonRef.current.contains(event.target)
+      ) {
         setIsMobileMenuOpen(false);
       }
     };
@@ -102,6 +108,7 @@ const Navbar = () => {
                 
                 {/* Mobile menu button */}
                 <button
+                  ref={hamburgerButtonRef}
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                   className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-colors duration-200"
                   aria-expanded="false"
