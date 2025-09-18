@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Home, Users, User, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -9,6 +9,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const mobileMenuRef = useRef(null);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -17,6 +18,25 @@ const Navbar = () => {
   ];
 
   const isActive = (path) => location.pathname === path;
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (mobileMenuRef.current && !mobileMenuRef.current.contains(event.target)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isMobileMenuOpen]);
 
   return (
     <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-lg border-b border-gray-200 dark:border-gray-700 fixed w-full top-0 z-50">
@@ -59,30 +79,88 @@ const Navbar = () => {
                   <User className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                   <span className="text-xs lg:text-sm text-gray-700 dark:text-gray-300 truncate max-w-20 lg:max-w-none">{user?.name}</span>
                   <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1 lg:px-2 py-1 rounded whitespace-nowrap">
-                    {user?.role}
+                    Employee
                   </span>
                 </div>
                 <div className="sm:hidden flex items-center">
                   <span className="text-xs text-gray-700 dark:text-gray-300 truncate max-w-16">{user?.name}</span>
                 </div>
-                <Link
-                  to="/profile"
-                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors duration-200 p-1"
-                  title="Profile"
-                >
-                  <User className="w-4 h-4 lg:w-5 lg:h-5" />
-                </Link>
+                
+                {/* Mobile menu button */}
                 <button
-                  onClick={logout}
-                  className="text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors duration-200 p-1"
-                  title="Logout"
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className="md:hidden inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-500 transition-colors duration-200"
+                  aria-expanded="false"
                 >
-                  <LogOut className="w-4 h-4 lg:w-5 lg:h-5" />
+                  <span className="sr-only">Open main menu</span>
+                  {isMobileMenuOpen ? (
+                    <X className="block h-6 w-6" aria-hidden="true" />
+                  ) : (
+                    <Menu className="block h-6 w-6" aria-hidden="true" />
+                  )}
                 </button>
               </>
             )}
           </div>
         </div>
+
+        {/* Mobile menu */}
+        {user && isMobileMenuOpen && (
+          <div className="md:hidden" ref={mobileMenuRef}>
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+              {navigation.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`${
+                      isActive(item.href)
+                        ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                        : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
+                    } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
+                  >
+                    <div className="flex items-center">
+                      <Icon className="w-5 h-5 mr-3" />
+                      {item.name}
+                    </div>
+                  </Link>
+                );
+              })}
+              
+              {/* Profile link in mobile menu */}
+              <Link
+                to="/profile"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`${
+                  isActive('/profile')
+                    ? 'bg-primary-50 border-primary-500 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                    : 'border-transparent text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white'
+                } block pl-3 pr-4 py-2 border-l-4 text-base font-medium transition-colors duration-200`}
+              >
+                <div className="flex items-center">
+                  <User className="w-5 h-5 mr-3" />
+                  Profile
+                </div>
+              </Link>
+              
+              {/* Logout button in mobile menu */}
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  logout();
+                }}
+                className="w-full text-left block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-800 dark:text-gray-300 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-base font-medium transition-colors duration-200"
+              >
+                <div className="flex items-center">
+                  <LogOut className="w-5 h-5 mr-3" />
+                  Logout
+                </div>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
