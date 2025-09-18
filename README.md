@@ -5,18 +5,18 @@ A modern, responsive React-based frontend for the employee-focused meeting room 
 ## 🚀 Features
 
 ### Core Functionality
-- **Employee Authentication** - Secure login/registration with JWT
-- **Dashboard** - Overview of bookings, rooms, and quick actions
-- **Room Browser** - Search, filter, and book meeting rooms
-- **Booking Management** - Create, view, edit, and cancel bookings
-- **Profile Management** - Update personal information with real-time sync
+- **Employee Authentication** - Secure login/registration with JWT and redirect to login after signup
+- **Dashboard** - Statistics cards with room count, active bookings, and user count
+- **Room Browser** - Filter and book meeting rooms with modal-based booking
+- **Booking Management** - Create, view, edit, cancel, and delete bookings with validation
+- **Profile Management** - Update personal information (name, email, department)
 - **Dark/Light Theme** - Toggle between themes with persistent preference
 
 ### User Experience
 - **Fully Responsive Design** - Optimized for mobile, tablet, and desktop
 - **Real-time Updates** - Immediate UI updates after actions
 - **Intuitive Navigation** - Clean, modern interface design
-- **Smart Filtering** - Filter rooms by capacity, amenities, and location
+- **Smart Filtering** - Filter rooms by capacity and amenities
 - **Confirmation Modals** - Beautiful confirmation dialogs for destructive actions
 - **Toast Notifications** - Real-time feedback for user actions
 
@@ -46,7 +46,8 @@ client/
 ├── src/
 │   ├── components/      # Reusable UI components
 │   │   ├── Layout/      # Navigation and layout components
-│   │   │   └── Navbar.jsx
+│   │   │   ├── Navbar.jsx  # Responsive navbar with mobile menu
+│   │   │   └── Footer.jsx  # Multi-section footer
 │   │   ├── BookingModal.jsx
 │   │   ├── ConfirmationModal.jsx
 │   │   └── ThemeToggle.jsx
@@ -125,24 +126,24 @@ VITE_APP_NAME=Meeting Room Booking
 ## 📱 Pages & Features
 
 ### 🏠 Dashboard
-- **Statistics Cards** - Total rooms, active bookings, user stats
-- **Quick Actions** - Fast access to book rooms and view bookings
-- **Recent Activity** - Overview of recent bookings and room usage
-- **Responsive Grid** - Adapts from 1 to 4 columns based on screen size
+- **Statistics Cards** - Total rooms, active bookings, and user count
+- **Quick Actions** - Direct links to book rooms and view bookings
+- **Welcome Section** - Personalized greeting with user name
+- **Responsive Grid** - Adapts from 1 to 3 columns based on screen size
 
 ### 🏢 Rooms
 - **Room Grid** - Visual cards showing room details and amenities
-- **Smart Filtering** - Filter by capacity, amenities, location
-- **Booking Integration** - Direct booking from room cards
-- **Responsive Layout** - 1-4 columns based on screen size
+- **Smart Filtering** - Filter by capacity and amenities
+- **Booking Integration** - Modal-based booking from room cards
+- **Responsive Layout** - 1-3 columns based on screen size
 - **Room Management** - Create, edit, delete rooms (all employees)
 
 ### 📅 Bookings
-- **My Bookings View** - Personal booking management
-- **Status Filtering** - Filter by active, cancelled, completed
-- **Booking Actions** - Edit, cancel, delete with confirmations
+- **My Bookings View** - Personal booking management with owner-based access
+- **Status Filtering** - Filter by all, active, and cancelled bookings
+- **Booking Actions** - Edit, cancel, delete with beautiful confirmation modals
 - **Responsive Cards** - Mobile-optimized booking display
-- **Real-time Updates** - Immediate UI updates after changes
+- **Time Validation** - Prevents past bookings and enforces 24-hour maximum duration
 
 ### 👤 Profile
 - **Personal Information** - Name, email, department editing
@@ -166,9 +167,9 @@ VITE_APP_NAME=Meeting Room Booking
 - **Large Desktop**: 1280px+ (xl: prefix)
 
 ### Mobile Features
-- **Hamburger Menu** - Collapsible navigation for mobile
+- **Hamburger Menu** - Collapsible navigation with click-outside functionality
+- **User Initials** - Circular badge showing user initials instead of full name
 - **Touch-Friendly** - 44px minimum touch targets
-- **Swipe-Friendly** - Optimized for touch interactions
 - **Responsive Typography** - Scalable text across devices
 - **Adaptive Layouts** - Grid systems that stack on mobile
 
@@ -193,9 +194,11 @@ VITE_APP_NAME=Meeting Room Booking
 ### Major UI/UX Improvements
 - ✅ **Complete Responsive Design** - Mobile-first approach across all pages
 - ✅ **Enhanced Profile Management** - Cancel button with change detection
-- ✅ **Beautiful Confirmation Modals** - Replaced browser alerts
-- ✅ **Real-time Profile Updates** - AuthContext integration
-- ✅ **Mobile Navigation** - Hamburger menu with smooth animations
+- ✅ **Beautiful Confirmation Modals** - Replaced browser alerts for cancel/delete actions
+- ✅ **Mobile Navigation** - Hamburger menu with user initials and click-outside functionality
+- ✅ **Professional Footer** - Multi-section footer with app information and quick links
+- ✅ **Authentication Flow** - Registration redirects to login (no auto-login)
+- ✅ **Booking Validation** - Frontend validation for past dates and duration limits
 
 ### Code Quality Improvements
 - ✅ **Cleaned Unused Code** - Removed APITest and related utilities
@@ -219,16 +222,23 @@ VITE_APP_NAME=Meeting Room Booking
 npm run build
 ```
 
-### Recommended Platforms
+### Live Deployment
+- **Platform**: Vercel ✅
+- **URL**: [https://meeting-room-booking-system-fronten.vercel.app/dashboard](https://meeting-room-booking-system-fronten.vercel.app/dashboard)
+- **Backend**: Connected to Render-hosted API
+- **Environment**: Production
+
+### Deployment Platforms
+- **Vercel** ✅ - Currently deployed (optimized for React)
 - **Netlify** - Automatic deployments from Git
-- **Vercel** - Optimized for React applications
 - **GitHub Pages** - Free static hosting
 - **Firebase Hosting** - Google's hosting platform
 
 ### Environment Configuration
-- Set production API URL in environment variables
-- Configure CORS on backend for production domain
-- Enable HTTPS for secure authentication
+- Production API URL configured for Render backend
+- CORS configured on backend for Vercel domain
+- HTTPS enabled for secure authentication
+- Automatic deployments from GitHub repository
 
 ## 🤝 Contributing
 
