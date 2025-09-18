@@ -130,14 +130,44 @@ const Bookings = () => {
     e.preventDefault();
     if (!selectedBooking) return;
 
+    // Frontend validation
+    const startTime = new Date(editForm.startTime);
+    const endTime = new Date(editForm.endTime);
+    const now = new Date();
+
+    // Validate times
+    if (startTime >= endTime) {
+      toast.error('End time must be after start time');
+      return;
+    }
+
+    if (startTime < now) {
+      toast.error('Cannot book meetings in the past');
+      return;
+    }
+
+    // Check maximum duration (24 hours)
+    const maxDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    if (endTime - startTime > maxDuration) {
+      toast.error('Booking duration cannot exceed 24 hours');
+      return;
+    }
+
+    // Check room capacity
+    const attendees = parseInt(editForm.attendees) || 1;
+    if (attendees > selectedBooking.room.capacity) {
+      toast.error(`Room capacity is ${selectedBooking.room.capacity}, but ${attendees} attendees requested`);
+      return;
+    }
+
     setEditLoading(true);
     try {
       const updateData = {
         title: editForm.title,
         description: editForm.description,
-        startTime: new Date(editForm.startTime).toISOString(),
-        endTime: new Date(editForm.endTime).toISOString(),
-        attendees: parseInt(editForm.attendees) || 1
+        startTime: startTime.toISOString(),
+        endTime: endTime.toISOString(),
+        attendees: attendees
       };
 
       await apiService.bookings.update(selectedBooking._id, updateData);

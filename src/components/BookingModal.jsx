@@ -123,6 +123,15 @@ const BookingModal = ({ room, onClose, onSuccess }) => {
       return;
     }
 
+    // Check maximum booking duration (24 hours)
+    const startTime = new Date(formData.startTime);
+    const endTime = new Date(formData.endTime);
+    const maxDuration = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+    if (endTime - startTime > maxDuration) {
+      toast.error('Booking duration cannot exceed 24 hours');
+      return;
+    }
+
     setLoading(true);
 
     try {
