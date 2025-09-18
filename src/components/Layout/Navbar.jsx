@@ -19,6 +19,16 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname === path;
 
+  // Generate user initials from name
+  const getUserInitials = (name) => {
+    if (!name) return 'U';
+    const names = name.trim().split(' ');
+    if (names.length === 1) {
+      return names[0].charAt(0).toUpperCase();
+    }
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  };
+
   // Close mobile menu when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -83,7 +93,11 @@ const Navbar = () => {
                   </span>
                 </div>
                 <div className="sm:hidden flex items-center">
-                  <span className="text-xs text-gray-700 dark:text-gray-300 truncate max-w-16">{user?.name}</span>
+                  <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                    <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
+                      {getUserInitials(user?.name)}
+                    </span>
+                  </div>
                 </div>
                 
                 {/* Mobile menu button */}

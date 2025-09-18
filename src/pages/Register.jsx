@@ -40,7 +40,7 @@ const Register = () => {
       const result = await register(userData);
       
       if (result.success) {
-        toast.success('Account created successfully! Please login.');
+        // Success message is already shown by AuthContext
         navigate('/login');
       }
     } catch (error) {

@@ -54,12 +54,11 @@ export const AuthProvider = ({ children }) => {
   const register = async (userData) => {
     try {
       const response = await apiService.auth.register(userData);
-      const { token, user } = response.data;
       
-      localStorage.setItem('token', token);
-      setUser(user);
+      // Don't automatically log in the user after registration
+      // They should go to login page to sign in with their new credentials
       
-      toast.success('Registration successful!');
+      toast.success('Registration successful! Please login with your credentials.');
       return { success: true };
     } catch (error) {
       const message = error.response?.data?.message || 'Registration failed';
