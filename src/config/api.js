@@ -29,10 +29,7 @@ const API_CONFIG = {
     
     // User endpoints
     USERS: {
-      BASE: '/api/users',
-      BY_ID: (id) => `/api/users/${id}`,
       PROFILE: '/api/users/profile',
-      ROLE: (id) => `/api/users/${id}/role`
     },
     
     // Health check

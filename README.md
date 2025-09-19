@@ -150,7 +150,7 @@ VITE_APP_NAME=Meeting Room Booking
 - **Change Detection** - Smart save/cancel button states
 - **Real-time Sync** - Profile updates reflect immediately
 - **Confirmation Modals** - Beautiful discard changes confirmation
-- **Employee Badge** - Consistent employee role display
+- **Employee Role Display** - Shows "Employee" role for all users
 
 ### 🔐 Authentication
 - **Login/Register** - Clean, responsive authentication forms
@@ -166,10 +166,18 @@ VITE_APP_NAME=Meeting Room Booking
 - **Desktop**: 1024px - 1279px (lg: prefix)
 - **Large Desktop**: 1280px+ (xl: prefix)
 
+### Desktop Features
+- **User Dropdown Menu** - Profile and logout accessible via user dropdown
+- **User Initials Badge** - Consistent circular badge with user initials across all screens
+- **Clickable User Info** - User initials and employee badge act as dropdown trigger
+- **Smooth Animations** - Chevron rotation and dropdown transitions
+- **Click-Outside Close** - Dropdown closes when clicking outside
+
 ### Mobile Features
-- **Hamburger Menu** - Collapsible navigation with click-outside functionality
-- **User Initials** - Circular badge showing user initials instead of full name
+- **Hamburger Menu** - Collapsible navigation with profile and logout options
+- **User Initials Badge** - Same circular badge design as desktop for consistency
 - **Touch-Friendly** - 44px minimum touch targets
+- **Click-Outside Close** - Menu closes when tapping outside
 - **Responsive Typography** - Scalable text across devices
 - **Adaptive Layouts** - Grid systems that stack on mobile
 

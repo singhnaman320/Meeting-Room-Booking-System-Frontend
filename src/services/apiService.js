@@ -69,10 +69,7 @@ const apiService = {
 
   // Users
   users: {
-    getAll: () => apiClient.get(API_CONFIG.ENDPOINTS.USERS.BASE),
-    getById: (id) => apiClient.get(API_CONFIG.ENDPOINTS.USERS.BY_ID(id)),
     updateProfile: (userData) => apiClient.put(API_CONFIG.ENDPOINTS.USERS.PROFILE, userData),
-    updateRole: (id, roleData) => apiClient.patch(API_CONFIG.ENDPOINTS.USERS.ROLE(id), roleData),
   },
 
   // Health check

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Home, Users, User, LogOut, Menu, X } from 'lucide-react';
+import { Calendar, Home, Users, User, LogOut, Menu, X, ChevronDown } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import ThemeToggle from '../ThemeToggle';
 
@@ -9,8 +9,11 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [isDesktopDropdownOpen, setIsDesktopDropdownOpen] = React.useState(false);
   const mobileMenuRef = useRef(null);
   const hamburgerButtonRef = useRef(null);
+  const desktopDropdownRef = useRef(null);
+  const desktopDropdownButtonRef = useRef(null);
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -30,9 +33,10 @@ const Navbar = () => {
     return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
   };
 
-  // Close mobile menu when clicking outside
+  // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
+      // Close mobile menu
       if (
         mobileMenuRef.current && 
         !mobileMenuRef.current.contains(event.target) &&
@@ -41,9 +45,19 @@ const Navbar = () => {
       ) {
         setIsMobileMenuOpen(false);
       }
+      
+      // Close desktop dropdown
+      if (
+        desktopDropdownRef.current && 
+        !desktopDropdownRef.current.contains(event.target) &&
+        desktopDropdownButtonRef.current &&
+        !desktopDropdownButtonRef.current.contains(event.target)
+      ) {
+        setIsDesktopDropdownOpen(false);
+      }
     };
 
-    if (isMobileMenuOpen) {
+    if (isMobileMenuOpen || isDesktopDropdownOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
     }
@@ -52,7 +66,7 @@ const Navbar = () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, [isMobileMenuOpen]);
+  }, [isMobileMenuOpen, isDesktopDropdownOpen]);
 
   return (
     <nav className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md shadow-lg border-b border-gray-200 dark:border-gray-700 fixed w-full top-0 z-50">
@@ -91,14 +105,57 @@ const Navbar = () => {
             <ThemeToggle />
             {user && (
               <>
-                <div className="hidden sm:flex items-center space-x-2">
-                  <User className="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                  <span className="text-xs lg:text-sm text-gray-700 dark:text-gray-300 truncate max-w-20 lg:max-w-none">{user?.name}</span>
-                  <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-1 lg:px-2 py-1 rounded whitespace-nowrap">
-                    Employee
-                  </span>
+                {/* Desktop user dropdown */}
+                <div className="hidden md:flex items-center relative">
+                  <button
+                    ref={desktopDropdownButtonRef}
+                    onClick={() => setIsDesktopDropdownOpen(!isDesktopDropdownOpen)}
+                    className="flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors duration-200"
+                  >
+                    <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
+                        {getUserInitials(user?.name)}
+                      </span>
+                    </div>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded whitespace-nowrap">
+                      Employee
+                    </span>
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isDesktopDropdownOpen ? 'rotate-180' : ''}`} />
+                  </button>
+                  
+                  {/* Desktop dropdown menu */}
+                  {isDesktopDropdownOpen && (
+                    <div
+                      ref={desktopDropdownRef}
+                      className="absolute right-0 top-full mt-2 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+                    >
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsDesktopDropdownOpen(false)}
+                        className={`${
+                          isActive('/profile')
+                            ? 'bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-300'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        } flex items-center px-4 py-2 text-sm transition-colors duration-200`}
+                      >
+                        <User className="w-4 h-4 mr-3" />
+                        Profile
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setIsDesktopDropdownOpen(false);
+                          logout();
+                        }}
+                        className="w-full text-left flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200"
+                      >
+                        <LogOut className="w-4 h-4 mr-3" />
+                        Logout
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="sm:hidden flex items-center">
+                {/* Mobile user initials */}
+                <div className="md:hidden flex items-center">
                   <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center">
                     <span className="text-xs font-medium text-primary-700 dark:text-primary-300">
                       {getUserInitials(user?.name)}
